@@ -3,3 +3,28 @@
 ######################################
 
 1. Allgemeines
+
+2. Annotationen
+@SpringBootApplication: Annotation der Klasse mit der Main-Methode
+    > diese Annotation fügt automatisch 3 weitere hinzu:
+        @SpringBootConfiguration: Ermöglicht es Konfigurationen zu hinterlegen
+        @EnableAutoConfiguration: Spring erstellt automatisch Komponenten welche vermutlich benötigt werden
+        @ComponentScan: Komponenten (z.B. Services, Controller etc.) in anderen Packages zum Classpath hinzufügen
+@Configuration (Klasse): Konfigurationsklasse definieren
+@Controller (Klasse): Controller registrieren
+@Bean (Methode): in einer Konfigurationklasse eine Bean konfigurieren
+@RequestMapping (Klasse): Route konfigurieren
+    > z.B. @RequestMapping("/home") -> alle Requests die mit "/home" beginnen
+@GetMapping (Methode): GET-Request verarbeiten
+
+3. Lombok-Annotationen
+@Data (Klasse): Über Lombok automatisch Getter und Setter hinzufügen
+@RequiredArgsConstructor (Klasse)
+
+4. Web
+- Daten an die View übergeben:
+    > in Controller Methode "Model" als Funktionsparameter angeben
+    > diesem Model können dann Attribute hinzugefügt werden, welche in der View verfügbar sein sollen
+        public String showOrderView(Model model) {
+            model.addAttribute("username","John Doe");
+        }
