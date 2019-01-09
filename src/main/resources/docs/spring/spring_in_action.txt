@@ -3,6 +3,8 @@
 ######################################
 
 1. Allgemeines
+- Logging:
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExampleController.class);
 
 2. Annotationen
 @SpringBootApplication: Annotation der Klasse mit der Main-Methode
@@ -15,11 +17,18 @@
 @Bean (Methode): in einer Konfigurationklasse eine Bean konfigurieren
 @RequestMapping (Klasse): Route konfigurieren
     > z.B. @RequestMapping("/home") -> alle Requests die mit "/home" beginnen
+@RequestParam (Methode): Zugriff auf Query Parameter
+    > z.B.
+    @GetMapping
+    public String showSearchView(@RequestParam("searchTerm") Optional<String> searchTerm) {}
 @GetMapping (Methode): GET-Request verarbeiten
+@CrossOrigin (Methode): CORS aktivieren, notwendig z.B. für Angular Client
+
 
 3. Lombok-Annotationen
 @Data (Klasse): Über Lombok automatisch Getter und Setter hinzufügen
 @RequiredArgsConstructor (Klasse)
+
 
 4. Web
 - Daten an die View übergeben:
@@ -28,3 +37,19 @@
         public String showOrderView(Model model) {
             model.addAttribute("username","John Doe");
         }
+- Controller über Config erstellen:
+    > wenn keine explizite Logik für einen Controller benötigt wird kann ein solcher (+ View) auch über die
+        Konfiguration erstellt werden
+    @Configuration
+    public class ApplicationConfig implements WebMvcConfigurer {
+
+        @Override
+        public void addViewControllers(ViewControllerRegistry registry) {
+            registry.addViewController("/").setViewName("home");
+        }
+    }
+- Query Parameter in Controller Action holen
+    > hierzu dient die Annotatin @RequestParam
+    > das Verwenden des Optional Types verhindert Fehler, falls ein Parameter nicht vorhanden ist
+        @GetMapping
+        public String showSearchView(@RequestParam("searchTerm") Optional<String> searchTerm) {}

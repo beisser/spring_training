@@ -1,0 +1,61 @@
+######################################
+########## Solr Performance ##########
+######################################
+
+1. Richtiges Lucene Directory wählen
+- wichtiges Property für Lucence/ Solr und dessen I/O-Operationen
+- extrem wichtig für Performance
+- in solrconfig.xml:
+    <directoryFactory name="DirectoryFactory"
+                        class="${solr.directoryFactory:solr.NRTCachingDirectoryFactory}"/>
+- Verfügbare Directories:
+    a.) StandardDirectoryFactory: Solr entscheided automatisch welches Directory am besten ist
+
+    b.) SimpleFSDirectoryFactory:
+        > Gut für kleine Apps die wenige Threads brauchen
+        > schlecht bei vielen Threads
+
+    c.) NIOFSDirectoryFactory:
+        > gut bei vielen benötigten Threads
+        > jedoch schlecht auf Windows
+
+    d.) MMapDirectoryFactory
+        > gut wenn real-time-search notwendig ist
+
+    e.) NRTCachingDirectoryFactory
+        > gut wenn real-time-search UND indexing notwendig ist
+        > Dokumente sind in Sekundenbruchteilen nach der Indexierung durchsuchbar
+
+    f.) HdfsDirectoryFactory
+        > perfekt für Solr der in Hadoop-Cluster läuft
+
+    g.) RAMDirectoryFactory
+        > persistiert die Daten nicht!
+        > Index ist nur im RAM gespeichert und ist daher nach Neustart weg
+        > gut z.B. für Tests
+
+
+2. I/O Operationen begrenzen
+- Lucene speichert Index in kleiner Segmenten auf der Platte
+- immer mal wieder merged Lucene diese Segmente und schreibt neue Segmente
+- Das Mergen und Schreiben von Segmenten kann relativ "teuer" werden, insbesondere wenn zur gleichen Zeit viele
+  Suchanfragen kommen oder gerade indexiert wird
+- Daher kann man die I/O-Operationen für das Mergen und Anlegen von Segmenten begrenzen um Performance für Queries
+  und Indexierung freizuhalten
+
+    <directoryFactory name="DirectoryFactory"
+                        class="${solr.directoryFactory:solr.NRTCachingDirectoryFactory}">
+            <!-- erlaubte MB für Schreiben neuer Segmente -->
+    		<double name="maxWriteMBPerSecFlush">20</double>
+
+    		<!-- erlaubte MB für Mergen -->
+    	    <double name="maxWriteMBPerSecMerge">20</double>
+
+    		<!-- erlaubte MB für Lesen von Segmenten -->
+    		<double name="maxWriteMBPerSecRead">50</double>
+    	</directoryFactory>
+
+
+3. Verzeichnisse für Index und Transaction-Log trennen
+- Verzeichnis für Einträge des TransactionLogs sollte auf einer anderem Platte liegen als das des Index
+- führt zu besserer Performance

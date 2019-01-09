@@ -1,0 +1,52 @@
+##############################################
+########## Solr Near Real Time (NRT) #########
+##############################################
+
+1. Near Real Time
+- NRT: Daten sollen so schnell wie möglich (optimalerweise gleich) nach dem Indexieren auch suchbar sein
+- Begriffe:
+    a.) Transaction-Log:
+        > File in dem Solr zu indexierende Dokumente raw speichert (zu Recovery-Zwecken)
+        > Jede Solr-Instanz in der Solr-Cloud hat ein eigenes Transaction-Log
+        > Wenn ein Dokument indexiert werden soll, wird es an den Leader geleitet und dieser leitet es an die Replicas weiter, dann:
+            * Replicas antwortem dem Leader
+            * Leader antwortet der Instanz
+            * Dokument wird in Transaction-Log geschrieben (Dokument ist da noch nicht indexiert!) -> allerdings ist es
+              gesichert und kann notfalls wiederhergestellt werden
+            * Dokumente in Transaction-Log können daher zu einem späteren Zeitpunkt indexiert werden
+
+    b.) softCommit:
+        > ermöglicht das Durchsuchen von zu indexierenden Dokumenten
+        > d.h. die Dokumente sind noch nicht "hart" in Segmente geschrieben, jedoch dennoch schon durchsuchbar
+        > weniger Resourcen-intensiv als der hardCommit
+        > dennoch braucht auch der softCommit-Resourcen, da er die Solr-Caches updaten muss
+
+    c.) commit (hardCommit):
+        > schreibt zu indexierende Dokumente hart in neue Segmente und schließt diese (eventuell startet dabei
+          ein Mergen von Segmenten) -> vgl. 02_solr_performance.txt, Punkt 2
+        > Transaction-Log wird ebenfalls geschlossen und ein neues erstellt
+
+
+2. Notwendige Konfiguration
+- in solrconfig.xml UpdateHandler so konfigurieren
+
+    <updateHandler class="solr.DirectUpdateHandler2">
+
+        <!-- Transaction-Log Konfiguration>
+        <updateLog>
+          <str name="dir">${solr.ulog.dir:}</str>
+          <int name="numVersionBuckets">${solr.ulog.numVersionBuckets:65536}</int>
+        </updateLog>
+
+        <!-- in welchem Intervall soll ein hardCommit ausgeführt werden -->
+        <autoCommit>
+           <maxTime>${solr.autoCommit.maxTime:15000}</maxTime>
+           <openSearcher>false</openSearcher>
+        </autoCommit>
+
+        <!-- softCommit: Wie schnell in Sekunden sollen zu indexierende Daten zur Suche verfügbar sein? -->
+        <autoSoftCommit>
+           <maxTime>${solr.autoSoftCommit.maxTime:-1}</maxTime>
+         </autoSoftCommit>
+
+    </updateHandler>

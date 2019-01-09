@@ -1,0 +1,97 @@
+##########################
+########## Solr ##########
+##########################
+
+
+1. Allgemeines
+- Beigriffe:
+    * Collection: ein Solr-Index
+    * Shards: eine Collection kann in mehrere Shards unterteilt werden
+    * Replica: von Shards können wiederum Replicas erstellt werden (Sicherheitskopien)
+- Einer SolrCloud mehrere Knoten hinzufügen
+    * in SOLR_HOME einen neuen Order erstellen z.B. node1
+    * solr.xml und zoo.cfg in diesen neuen Ordner kopieren
+    * solr start -c -s ..\node1 -> SolrCloud mit diesem Knoten starten
+- Eigene Configs erstellen:
+    * unter SOLR_HOME\server\solr\configsets
+    * hier einen Ordner mit einem Namen für die Config erstellen z.B. nbe
+    * innerhalb des Ordners müssen die Config-Files in einem Ordner "config" liegen
+    * zkcli.bat –z localhost:9983 –cmd upconfig –confdir ..\..\solr\configsets\nbe\conf –confname nbe -> config hochladen
+- solrconfig.xml
+    * autoCreateFields:false -> Schemaless-Mode ausschalten
+
+
+
+2. Cheatsheet
+solr start -c                       Solr in Cloud-Modus starten
+solr start -e                       Solr mit Beispielen starten
+solr status                         Details über solr_home, memory etc.
+solr stop -all                      alle Solr Instanzen herunterfahren
+solr start -m 4g                    startet Solr mit 4G JVM-Memory
+solr start -s ..\node_name          Solr Knoten mit dem Namen "node_name" hochfahren
+
+
+Config hochladen
+zkcli.bat –z localhost:9983 –cmd upconfig –confdir ..\..\solr\configsets\nbe\conf –confname nbe
+
+Collection erstellen
+http://localhost:8983/solr/admin/collections?action=CREATE&name=collectionName&numShards=1&collection.configName=nbe
+
+Collection löschen
+http://localhost:8983/solr/admin/collections?action=DELETE&name=collectionName
+
+Collection reload z.B. nach Config-Änderungen
+http://localhost:8983/solr/admin/collections?action=RELOAD&name=collectionName
+
+Alias anlegen
+http://localhost:8983/solr/admin/collections?action=CREATEALIAS&name=aliasName&collections=collectionName,collectionName
+
+Replica erstellen
+http://localhost:8983/solr/admin/collections?action=ADDREPLICA&collection=collectionName&shard=shardName
+
+Shard splitten
+http://localhost:8983/solr/admin/collections?action=SPLITSHARD&shard=shardName&collection=collectionName
+
+Neue Shard erstellen
+http://localhost:8983/solr/admin/collections?action=SPLITSHARD&shard=shardName&collection=collectionName
+
+Shard löschen
+http://localhost:8983/solr/admin/collections?action=DELETE&shard=shardName&collection=collectionName
+
+xml-Indexierung
+example/exampledocs/java -Dc=collectionName -jar post.jar xmlDatei.xml
+
+csv-Indexierung
+example/exampledocs/java -Dc=collectionName -Dtype=text/csv -jar post.jar csvDatei.csv
+
+Dokumente löschen
+http://localhost:8983/solr/collectionName/update?commit=true&stream.body=<delete><query>*:*</query></delete>
+
+Basis Solr-Query
+http://localhost:8983/solr/collectionName/select?q=*:*
+
+
+3. Solr Config (solr.xml)
+- in der solr.xml können u.a. konfiguriert werden:
+    * hostPort: Port unter dem Solr laufen soll
+    * hostContext: Context unter dem Solr erreichbar sein soll (/solr ist der Default)
+    * zkClientTimeout: Timeout für Zookeeper-Verbindung
+
+
+4. Core Properties setzen:
+- Core: Einzelner Index
+- Um diverse Einstellungen an einem Core vorzunehmen kann eine Datei core.properties im entsprechenden Solr Home
+  angelegt werden
+- in den core.properties kann z.B. gesetzt werden:
+    * numShards: Anzahl der Shards
+    * collection.configName: Name der Configuration aus dem Zookeeper
+    * name: Name des Cores
+    * replicaType
+    * shard: der Shard Identifier
+    * collection: Collection zu welcher der Core gehört
+    * coreNodeName: Name des Cores in der Solr Cloud
+    * config: Name der Index-Config (Default: solrconfig.xml)
+    * dataDir: Verzeichnis innerhalb des Solr-Homes wo der Index abgelegt werden soll (Default: data)
+    * uLogDir: Verzeichnis für Einträge des TransactionLogs (sollte auf einer anderem Platte als der Index gespeichert werden)
+    * schema: Name der Schema-Config (Default: schema.xml)
+

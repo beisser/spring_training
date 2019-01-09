@@ -1,0 +1,37 @@
+#############################
+##### DataImportHandler #####
+#############################
+
+1. About
+- ermöglicht strukturierte Daten zu indexieren (XML, Datenbank, RSS etc.)
+- Notwendige Schritte:
+    a.) RequestHandler konfigurieren (in solrconfig.xml)
+
+        <lib dir="${solr.install.dir:../../../..}/dist/" regex="solr-dataimporthandler-.*\.jar" />
+        <requestHandler name="/dataimport" class="org.apache.solr.handler.dataimport.DataImportHandler">
+            <lst name="defaults">
+                <str name="config">import_config.xml</str>
+            </lst>
+        </requestHandler>
+
+    b.) Konfigurationsdatei, welche der RequestHandler verwendet (import_config.xml) in conf-Verzeichnis ablegen
+        <dataConfig>
+        	<dataSource type="FileDataSource" encoding="UTF-8" />
+        	<document>
+        		<entity name="page" processor="XPathEntityProcessor" stream="true"
+        			forEach="/mediawiki/page" url="../node1/solr_wiki/source.xml"
+        			transformer="RegexTransformer,DateFormatTransformer">
+
+        			<field column="id" xpath="/mediawiki/page/id" />
+                    <field column="name" xpath="/mediawiki/page/title" />
+                    <field column="user" xpath="/mediawiki/page/revision/contributor/username" />
+                    <field column="text" xpath="/mediawiki/page/revision/text" />
+
+                    <field column="$skipDoc" regex="^#REDIRECT .*" replaceWith="true" sourceColName="text"/>
+
+        		</entity>
+        	</document>
+        </dataConfig>
+
+    c.) REST-Call zum Import
+    http://localhost:8983/solr/collectionName/dataimport?command=full-import&commit=true&clean=false&verbose=true&start=0&rows=15

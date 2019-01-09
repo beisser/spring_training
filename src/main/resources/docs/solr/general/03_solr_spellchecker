@@ -1,0 +1,55 @@
+######################################
+########## Solr Spellchecker #########
+######################################
+
+1. Spellchecker konfigurieren
+- DirectSolrSpellChecker: Möglichkeit ein Feld anzugeben aus welchem die Spellcheck-Vorschläge kommen
+- dabei können mehrere Spellcheck Komponenten gleichzeitig an sein
+
+- Konfiguration in solrconfig.xml:
+    a.) Spellcheck Component hinzufügen
+        <searchComponent name="spellcheck" class="solr.SpellCheckComponent">
+
+            <str name="queryAnalyzerFieldType">text_general</str>
+
+            <lst name="spellchecker">
+
+                  <!-- diesen Namen muss man im Request Handler unten angeben -->
+                  <str name="name">custom_name_checker</str>
+
+                  <!-- hier den Namen des Feldes setzen -->
+                  <str name="field">name</str>
+
+
+                  <str name="classname">solr.DirectSolrSpellChecker</str>
+                  <str name="distanceMeasure">internal</str>
+                  <float name="accuracy">0.8</float>
+                  <int name="maxEdits">1</int>
+                  <int name="minPrefix">1</int>
+                  <int name="maxInspections">5</int>
+                  <int name="minQueryLength">3</int>
+                  <float name="maxQueryFrequency">0.01</float>
+                </lst>
+
+        </searchComponent>
+
+    b.) Spellcheck Component im Request Handler hinzufügen
+        <requestHandler name="/spell" class="solr.SearchHandler" startup="lazy">
+            <lst name="defaults">
+              <str name="spellcheck.dictionary">custom_name_checker</str>
+              <str name="spellcheck">on</str>
+              <str name="spellcheck.extendedResults">true</str>
+              <str name="spellcheck.count">10</str>
+              <str name="spellcheck.collate">true</str>
+              <str name="spellcheck.collateExtendedResults">true</str>
+            </lst>
+            <arr name="last-components">
+              <str>spellcheck</str>
+            </arr>
+          </requestHandler>
+
+        -> WICHTIG: es können mehrere Spellcheck Komponenten gleichzeitg aktiv sein:
+          <str name="spellcheck.dictionary">default</str>
+          <str name="spellcheck.dictionary">wordbreak</str>
+
+      c.) Verwendung des Spellcheckers: /spell?q=test
